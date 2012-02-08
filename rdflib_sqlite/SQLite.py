@@ -1,12 +1,19 @@
+# try:
+#     from sqlite3 import dbapi2 as sqlite # python 2.5
+# except:
+#     try:
+#         from pysqlite2 import dbapi2 as sqlite
+#     except ImportError:
+#         import warnings
+#         warnings.warn("neither pysqlite2 (Python 2.4) nor sqlite3 is installed")
+#         __test__=False
+
 try:
-    from sqlite3 import dbapi2 as sqlite # python 2.5
-except:
-    try:
-        from pysqlite2 import dbapi2 as sqlite
-    except ImportError:
-        import warnings
-        warnings.warn("neither pysqlite2 (Python 2.4) nor sqlite3 is installed")
-        __test__=False
+    import sqlite3
+except ImportError:
+    import warnings
+    warnings.warn("sqlite3 is not installed")
+    __test__=False
 
 import re, os, sys
 from rdflib.graph import QuotedGraph
@@ -60,10 +67,7 @@ class SQLite(AbstractSQLStore):
         exists, but there is insufficient permissions to open the
         store."""
         if create:
-            dbfile = os.path.join(home,self.identifier)
-            if not os.path.exists(dbfile):
-                raise Exception("Non-existent database file %s." % dbfile)
-            db = sqlite.connect(dbfile)
+            db = sqlite3.connect(os.path.join(home,self.identifier))
             c=db.cursor()
             c.execute(CREATE_ASSERTED_STATEMENTS_TABLE%(self._internedId))
             c.execute(CREATE_ASSERTED_TYPE_STATEMENTS_TABLE%(self._internedId))
@@ -121,7 +125,7 @@ class SQLite(AbstractSQLStore):
             db.commit()
             db.close()
 
-        self._db = sqlite.connect(os.path.join(home,self.identifier))
+        self._db = sqlite3.connect(os.path.join(home,self.identifier))
         self._db.create_function("regexp", 2, regexp)
 
         if os.path.exists(os.path.join(home,self.identifier)):
@@ -143,16 +147,13 @@ class SQLite(AbstractSQLStore):
         """
         FIXME: Add documentation
         """
-        dbfile = os.path.join(home,self.identifier)
-        if not os.path.exists(dbfile):
-            return
-        db = sqlite.connect(dbfile)
+        db = sqlite3.connect(os.path.join(home,self.identifier))
         c=db.cursor()
         for tblsuffix in table_name_prefixes:
             try:
                 c.execute('DROP table %s'%tblsuffix%(self._internedId))
-            except:
-                print "unable to drop table: %s"%(tblsuffix%(self._internedId))
+            except Exception, errmsg:
+                print "unable to drop table: %s, %s"%(tblsuffix%(self._internedId), errmsg)
 
         #Note, this only removes the associated tables for the closed world universe given by the identifier
         print "Destroyed Close World Universe %s ( in SQLite database %s)"%(self.identifier,home)
