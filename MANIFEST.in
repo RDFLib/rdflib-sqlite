@@ -1,0 +1,4 @@
+include *.md
+recursive-include rdflib_sqlite *.py
+include setup.*
+graft test
