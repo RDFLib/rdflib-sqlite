@@ -1,10 +1,13 @@
-import sqlite3
 try:
-    import sqlite3
-except ImportError:
-    import warnings
-    warnings.warn("sqlite3 is not installed")
-    __test__=False
+    from sqlite3 import dbapi2 as sqlite # python 2.5
+except:
+    try:
+        from pysqlite2 import dbapi2 as sqlite
+    except ImportError:
+        import warnings
+        warnings.warn("neither pysqlite2 (Python 2.4) nor sqlite3 is installed")
+        __test__=False
+
 import re, os, sys
 from rdflib.graph import QuotedGraph
 from rdflib.graph import RDF
@@ -20,13 +23,11 @@ from rdfextras.store.AbstractSQLStore import QUOTED_PARTITION
 from rdfextras.store.AbstractSQLStore import table_name_prefixes
 from rdfextras.store.AbstractSQLStore import TRIPLE_SELECT_NO_ORDER
 
-
-from rdflib.plugin import register
-from rdflib.store import Store
+import rdflib
 
 Any = None
 
-register("SQLite", Store, "rdflib_sqlite", "SQLite")
+rdflib.plugin.register("SQLite", rdflib.store.Store, "rdflib_sqlite.SQLite", "SQLite")
 
 #User-defined REGEXP operator
 def regexp(expr, item):
@@ -59,7 +60,10 @@ class SQLite(AbstractSQLStore):
         exists, but there is insufficient permissions to open the
         store."""
         if create:
-            db = sqlite3.connect(os.path.join(home,self.identifier))
+            dbfile = os.path.join(home,self.identifier)
+            if not os.path.exists(dbfile):
+                raise Exception("Non-existent database file %s." % dbfile)
+            db = sqlite.connect(dbfile)
             c=db.cursor()
             c.execute(CREATE_ASSERTED_STATEMENTS_TABLE%(self._internedId))
             c.execute(CREATE_ASSERTED_TYPE_STATEMENTS_TABLE%(self._internedId))
@@ -117,7 +121,7 @@ class SQLite(AbstractSQLStore):
             db.commit()
             db.close()
 
-        self._db = sqlite3.connect(os.path.join(home,self.identifier))
+        self._db = sqlite.connect(os.path.join(home,self.identifier))
         self._db.create_function("regexp", 2, regexp)
 
         if os.path.exists(os.path.join(home,self.identifier)):
@@ -139,7 +143,10 @@ class SQLite(AbstractSQLStore):
         """
         FIXME: Add documentation
         """
-        db = sqlite3.connect(os.path.join(home,self.identifier))
+        dbfile = os.path.join(home,self.identifier)
+        if not os.path.exists(dbfile):
+            return
+        db = sqlite.connect(dbfile)
         c=db.cursor()
         for tblsuffix in table_name_prefixes:
             try:
