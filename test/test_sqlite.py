@@ -4,7 +4,7 @@ _logger = logging.getLogger(__name__)
 
 import test_context
 import test_graph
-from nose.exc import SkipTest
+from nose import SkipTest
 import tempfile
 
 class SQLiteGraphTestCase(test_graph.GraphTestCase):
@@ -32,6 +32,7 @@ class SQLiteContextTestCase(test_context.ContextTestCase):
 
     def testLenInMultipleContexts(self):
         raise SkipTest("Known issue.")
-    
+
+
 SQLiteGraphTestCase.storetest = True
 SQLiteContextTestCase.storetest = True

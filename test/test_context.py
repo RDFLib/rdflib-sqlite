@@ -1,17 +1,19 @@
 import unittest
 from tempfile import mkdtemp
-from tempfile import mkstemp
 from rdflib import BNode
 from rdflib import ConjunctiveGraph
 from rdflib import Graph
 from rdflib import URIRef
+from rdflib import plugin, store
+
 # logging.getLogger('sqlalchemy.engine').setLevel(logging.WARN)
 
 class ContextTestCase(unittest.TestCase):
-    store_name = 'default'
-    path = None
     storetest = True
+    store_name = "SQLite"
     create = True
+    identifier = "rdflib_test"
+
     michel = URIRef(u'michel')
     tarek = URIRef(u'tarek')
     bob = URIRef(u'bob')
@@ -23,13 +25,11 @@ class ContextTestCase(unittest.TestCase):
     c2 = URIRef(u'context-2')
 
     def setUp(self):
-        self.graph = ConjunctiveGraph(store=self.store_name)
+        self.store = plugin.get('SQLite', store.Store)()
+        self.path = mkdtemp(prefix='test',dir='/tmp')
+        self.store.open(self.path+'/hardcoded')
+        self.graph = ConjunctiveGraph(store=self.store, identifier=self.identifier)
         self.graph.destroy(self.path)
-        if isinstance(self.path, type(None)):
-            if self.store_name == "SQLite":
-                self.path = mkstemp(prefix='test',dir='/tmp')
-            else:
-                self.path = mkdtemp(prefix='test',dir='/tmp')
         self.graph.open(self.path, create=self.create)
 
     def tearDown(self):
