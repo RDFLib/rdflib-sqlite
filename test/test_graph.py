@@ -3,13 +3,15 @@ from tempfile import mkdtemp
 from rdflib import Graph
 from rdflib import RDF
 from rdflib import URIRef
-from rdflib import plugin, store
+from rdflib import Literal
+from rdflib import plugin
+from rdflib import store
 
 class GraphTestCase(unittest.TestCase):
     storetest = True
     store_name = "SQLite"
-    create = True
-    identifier = "rdflib_test"
+    # create = True
+    identifier = Literal("rdflib_test")
 
     michel = URIRef(u'michel')
     tarek = URIRef(u'tarek')
@@ -19,30 +21,30 @@ class GraphTestCase(unittest.TestCase):
     pizza = URIRef(u'pizza')
     cheese = URIRef(u'cheese')
     
-    def setUp(self):
-        self.path = mkdtemp(prefix='test',dir='/tmp')
-        self.store = plugin.get('SQLite', store.Store)(
-                configuration=self.path, identifier=self.identifier)
+    def setUp(self, tmppath=mkdtemp()):
+        # self.path = mkdtemp(prefix='test',dir='/tmp')
+        self.store = plugin.get(self.store_name, store.Store)(
+                configuration=tmppath, identifier=self.identifier)
         self.graph = Graph(self.store, self.identifier)
-        self.graph.destroy(self.path)
-        self.graph.open(self.path, create=self.create)
+        # self.graph.destroy(self.tmppath)
+        self.graph.open(tmppath)
     
-    def tearDown(self):
-        self.graph.destroy(self.path)
+    def tearDown(self, tmppath=mkdtemp()):
+        self.graph.destroy(tmppath)
         try:
             self.graph.close()
         except:
             pass
-        import os
-        if hasattr(self,'path') and self.path is not None:
-            if os.path.exists(self.path):
-                if os.path.isdir(self.path):
-                    for f in os.listdir(self.path): os.unlink(self.path+'/'+f)
-                    os.rmdir(self.path)
-                elif len(self.path.split(':')) == 1:
-                    os.unlink(self.path)
-                else:
-                    os.remove(self.path)
+        # import os
+        # if hasattr(self,'tmppath') and self.tmppath is not None:
+        #     if os.path.exists(self.tmppath):
+        #         if os.path.isdir(self.tmppath):
+        #             for f in os.listdir(self.tmppath): os.unlink(self.tmppath+'/'+f)
+        #             os.rmdir(self.tmppath)
+        #         elif len(self.path.split(':')) == 1:
+        #             os.unlink(self.path)
+        #         else:
+        #             os.remove(self.path)
     
     def addStuff(self):
         tarek = self.tarek

@@ -29,10 +29,8 @@ class StoreTestCase(unittest.TestCase):
         gc.disable()
         
         self.graph = Graph(store=self.store)
-        if not self.path:
-            path = mkstemp(dir="/tmp", prefix="test", suffix='.sqlite')[1]
-        self.path = path
-        self.graph.open(self.path, create=True)
+        self.tmppath = mkdtemp()
+        self.graph.open(self.tmppath)
         self.input = Graph()
     
     def tearDown(self):
