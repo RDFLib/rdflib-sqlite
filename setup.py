@@ -8,7 +8,7 @@ def setup_python3():
     from distutils.filelist import FileList
     from distutils import dir_util, file_util, util, log
     from os.path import join
-  
+
     tmp_src = join("build", "src")
     log.set_verbosity(1)
     fl = FileList()
@@ -22,9 +22,9 @@ def setup_python3():
         outf, copied = file_util.copy_file(f, join(tmp_src, f), update=1)
         if copied and outf.endswith(".py"):
             outfiles_2to3.append(outf)
-  
+
     util.run_2to3(outfiles_2to3)
-  
+
     # arrange setup to use the copy
     sys.path.insert(0, tmp_src)
 
@@ -45,8 +45,9 @@ config = dict(
     name = 'rdflib-sqlite',
     version = __version__,
     description = "rdflib extension adding SQLite as back-end store",
-    author = "Graham Higgins",
-    author_email = "gjhiggins@gmail.com",
+    author = "RDFLib team",
+    maintainer = "Graham Higgins",
+    maintainer_email = "gjhiggins@gmail.com",
     url = "http://github.com/RDFLib/rdflib-sqlite",
     packages = ["rdflib_sqlite"],
     download_url = "https://github.com/RDFLib/rdflib-sqlite/zipball/master",
@@ -57,9 +58,9 @@ config = dict(
     SQLite store formula-aware implementation.  It stores its triples in the following partitions:
 
     * Asserted non rdf:type statements
-    - Asserted rdf:type statements (in a table which models Class membership). 
-      The motivation for this partition is primarily improved query speed and 
-      scalability as most graphs will always have more rdf:type statements than 
+    - Asserted rdf:type statements (in a table which models Class membership).
+      The motivation for this partition is primarily improved query speed and
+      scalability as most graphs will always have more rdf:type statements than
       others.
     - All Quoted statements
 
@@ -79,7 +80,7 @@ config = dict(
                    "Natural Language :: English",
                    ],
     test_suite = "test",
-    install_requires = ["rdflib>=3.0", 
+    install_requires = ["rdflib>=3.0",
                         "rdfextras>=0.1",
                     ],
     entry_points = {

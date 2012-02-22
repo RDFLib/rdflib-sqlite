@@ -1,5 +1,6 @@
+import os
 import unittest
-from tempfile import mkdtemp
+from tempfile import mkdtemp, mkstemp
 from rdflib import BNode
 from rdflib import ConjunctiveGraph
 from rdflib import Graph
@@ -12,9 +13,8 @@ from rdflib import store
 
 class ContextTestCase(unittest.TestCase):
     storetest = True
-    store_name = "SQLite"
+    store_name = "default"
     create = True
-    identifier = Literal("rdflib_test")
 
     michel = URIRef(u'michel')
     tarek = URIRef(u'tarek')
@@ -26,30 +26,23 @@ class ContextTestCase(unittest.TestCase):
     c1 = URIRef(u'context-1')
     c2 = URIRef(u'context-2')
 
-    def setUp(self, tmppath=mkdtemp()):
-        # self.tmppath = mkdtemp()
-        self.store = plugin.get(self.store_name, store.Store)(
-                configuration=tmppath, identifier=self.identifier)
-        self.graph = ConjunctiveGraph(self.store_name, identifier=self.identifier)
-        self.graph.destroy(tmppath)
-        self.graph.open(tmppath)
+    def setUp(self):
+        self.graph = ConjunctiveGraph(self.store_name, self.identifier)
+        self.graph.open(self.tmppath, create=self.create)
+        # self.store = plugin.get(self.store_name, store.Store)(
+        #         configuration=self.tmppath, identifier=self.identifier)
+        # self.graph = ConjunctiveGraph(self.store_name, identifier=self.identifier)
+        # self.graph.destroy(self.tmppath)
+        # self.graph.open(self.tmppath)
     
-    def tearDown(self, tmppath=mkdtemp()):
-        self.graph.destroy(tmppath)
+    def tearDown(self):
+        self.graph.destroy(self.tmppath)
         try:
             self.graph.close()
         except:
             pass
-        # import os
-        # if hasattr(self,'tmppath') and self.tmppath is not None:
-        #     if os.path.exists(self.tmppath):
-        #         if os.path.isdir(self.tmppath):
-        #             for f in os.listdir(self.tmppath): os.unlink(self.tmppath+'/'+f)
-        #             os.rmdir(self.tmppath)
-        #         elif len(self.path.split(':')) == 1:
-        #             os.unlink(self.path)
-        #         else:
-        #             os.remove(self.path)
+        if os.path.exists(self.tmppath):
+            os.unlink(self.tmppath)
 
     def get_context(self, identifier):
         assert isinstance(identifier, URIRef) or \

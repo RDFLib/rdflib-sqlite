@@ -1,19 +1,19 @@
-# try:
-#     from sqlite3 import dbapi2 as sqlite # python 2.5
-# except:
-#     try:
-#         from pysqlite2 import dbapi2 as sqlite
-#     except ImportError:
-#         import warnings
-#         warnings.warn("neither pysqlite2 (Python 2.4) nor sqlite3 is installed")
-#         __test__=False
-
 try:
-    import sqlite3
-except ImportError:
-    import warnings
-    warnings.warn("sqlite3 is not installed")
-    __test__=False
+    from sqlite3 import dbapi2 as sqlite3 # python 2.5
+except:
+    try:
+        from pysqlite2 import dbapi2 as sqlite3
+    except ImportError:
+        import warnings
+        warnings.warn("neither pysqlite2 (Python 2.4) nor sqlite3 is installed")
+        __test__=False
+
+# try:
+#     import sqlite3
+# except ImportError:
+#     import warnings
+#     warnings.warn("sqlite3 is not installed")
+#     __test__=False
 
 import re, os, sys
 from rdflib.graph import QuotedGraph
@@ -21,42 +21,57 @@ from rdflib.graph import RDF
 from rdflib.term import Literal
 from rdfextras.store.REGEXMatching import REGEXTerm
 from rdfextras.store.REGEXMatching import PYTHON_REGEX
-from rdfextras.store.AbstractSQLStore import AbstractSQLStore, Graph
-from rdfextras.store.AbstractSQLStore import extractTriple, unionSELECT
-from rdfextras.store.AbstractSQLStore import ASSERTED_NON_TYPE_PARTITION
-from rdfextras.store.AbstractSQLStore import ASSERTED_TYPE_PARTITION
-from rdfextras.store.AbstractSQLStore import ASSERTED_LITERAL_PARTITION
-from rdfextras.store.AbstractSQLStore import QUOTED_PARTITION
-from rdfextras.store.AbstractSQLStore import table_name_prefixes
-from rdfextras.store.AbstractSQLStore import TRIPLE_SELECT_NO_ORDER
+# from rdfextras.store.AbstractSQLStore import AbstractSQLStore, Graph
+# from rdfextras.store.AbstractSQLStore import extractTriple, unionSELECT
+# from rdfextras.store.AbstractSQLStore import ASSERTED_NON_TYPE_PARTITION
+# from rdfextras.store.AbstractSQLStore import ASSERTED_TYPE_PARTITION
+# from rdfextras.store.AbstractSQLStore import ASSERTED_LITERAL_PARTITION
+# from rdfextras.store.AbstractSQLStore import QUOTED_PARTITION
+# from rdfextras.store.AbstractSQLStore import table_name_prefixes
+# from rdfextras.store.AbstractSQLStore import TRIPLE_SELECT_NO_ORDER
+from rdflib_sqlite.AbstractSQLStore import AbstractSQLStore, Graph
+from rdflib_sqlite.AbstractSQLStore import extractTriple, unionSELECT
+from rdflib_sqlite.AbstractSQLStore import ASSERTED_NON_TYPE_PARTITION
+from rdflib_sqlite.AbstractSQLStore import ASSERTED_TYPE_PARTITION
+from rdflib_sqlite.AbstractSQLStore import ASSERTED_LITERAL_PARTITION
+from rdflib_sqlite.AbstractSQLStore import QUOTED_PARTITION
+from rdflib_sqlite.AbstractSQLStore import table_name_prefixes
+from rdflib_sqlite.AbstractSQLStore import TRIPLE_SELECT_NO_ORDER
 
+import logging
+log = logging.getLogger(__name__)
 import rdflib
 
 Any = None
 
-rdflib.plugin.register("SQLite", rdflib.store.Store, "rdflib_sqlite.SQLite", "SQLite")
+rdflib.plugin.register(
+    "SQLite", rdflib.store.Store,
+    "rdflib_sqlite.SQLite", "SQLite")
 
-#User-defined REGEXP operator
+# User-defined REGEXP operator
 def regexp(expr, item):
     r = re.compile(expr)
     return r.match(item) is not None
 
 class SQLite(AbstractSQLStore):
     """
-    SQLite store formula-aware implementation.  It stores it's triples in the following partitions:
+    SQLite store formula-aware implementation.  It stores its triples in
+    the following partitions:
 
     - Asserted non rdf:type statements
     - Asserted rdf:type statements (in a table which models Class membership)
-    The motivation for this partition is primarily query speed and scalability as most graphs will always have more rdf:type statements than others
+      The motivation for this partition is primarily query speed and scalability
+      as most graphs will always have more rdf:type statements than others
     - All Quoted statements
 
-    In addition it persists namespace mappings in a seperate table
+    In addition it persists namespace mappings in a separate table
     """
     context_aware = True
-    formula_aware = True
-    transaction_aware = True
+    formula_aware = True # really?
+    transaction_aware = True # really?
     regex_matching = PYTHON_REGEX
     autocommit_default = False
+    _Store__node_pickler = None
 
     def open(self, home, create=True):
         """
@@ -67,7 +82,7 @@ class SQLite(AbstractSQLStore):
         exists, but there is insufficient permissions to open the
         store."""
         if create:
-            db = sqlite3.connect(os.path.join(home,self.identifier))
+            db = sqlite3.connect(home)
             c=db.cursor()
             c.execute(CREATE_ASSERTED_STATEMENTS_TABLE%(self._internedId))
             c.execute(CREATE_ASSERTED_TYPE_STATEMENTS_TABLE%(self._internedId))
@@ -120,15 +135,17 @@ class SQLite(AbstractSQLStore):
                     ],
                 )]:
                 for indexName,columns in indices:
-                    c.execute("CREATE INDEX %s on %s (%s)"%(indexName%self._internedId,tblName%(self._internedId),','.join(columns)))
+                    c.execute("CREATE INDEX %s on %s (%s)" % (
+                        indexName % self._internedId, tblName % (
+                                    self._internedId),','.join(columns)))
             c.close()
             db.commit()
             db.close()
 
-        self._db = sqlite3.connect(os.path.join(home,self.identifier))
+        self._db = sqlite3.connect(home)
         self._db.create_function("regexp", 2, regexp)
 
-        if os.path.exists(os.path.join(home,self.identifier)):
+        if os.path.exists(home):
             c = self._db.cursor()
             c.execute("SELECT * FROM sqlite_master WHERE type='table'")
             tbls = [rt[1] for rt in c.fetchall()]
@@ -136,31 +153,33 @@ class SQLite(AbstractSQLStore):
             for tn in [tbl%(self._internedId) for tbl in table_name_prefixes]:
                 if tn not in tbls:
                     sys.stderr.write("table %s Doesn't exist\n" % (tn));
-                    #The database exists, but one of the partitions doesn't exist
+                    # The database exists, but one of the partitions doesn't exist
                     return 0
-            #Everything is there (the database and the partitions)
+            # Everything is there (the database and the partitions)
             return 1
-        #The database doesn't exist - nothing is there
-        #return -1
+        # The database doesn't exist - nothing is there
+        # return -1
 
     def destroy(self, home):
         """
         FIXME: Add documentation
         """
-        db = sqlite3.connect(os.path.join(home,self.identifier))
+        db = sqlite3.connect(home)
         c=db.cursor()
         for tblsuffix in table_name_prefixes:
             try:
                 c.execute('DROP table %s'%tblsuffix%(self._internedId))
             except Exception, errmsg:
-                print "unable to drop table: %s, %s"%(tblsuffix%(self._internedId), errmsg)
-
-        #Note, this only removes the associated tables for the closed world universe given by the identifier
-        print "Destroyed Close World Universe %s ( in SQLite database %s)"%(self.identifier,home)
+                # print("unable to drop table: %s, %s" % (
+                #           tblsuffix%(self._internedId), errmsg))
+                pass
+        # Note, this only removes the associated tables for the closed
+        # world universe given by the identifier
+        # print("Destroyed Close World Universe %s ( in SQLite database %s)" % (
+        #        self.identifier,home))
         db.commit()
         c.close()
         db.close()
-        os.remove(os.path.join(home,self.identifier))
 
     def EscapeQuotes(self,qstr):
         """
@@ -173,8 +192,8 @@ class SQLite(AbstractSQLStore):
         tmp = tmp.replace("'", "\\'")
         return tmp
 
-    #This is overridden to leave unicode terms as is
-    #Instead of converting them to ascii (the default behavior)
+    # This is overridden to leave unicode terms as is
+    # Instead of converting them to ascii (the default behavior)
     def normalizeTerm(self,term):
         if isinstance(term,(QuotedGraph,Graph)):
             return term.identifier
@@ -185,18 +204,21 @@ class SQLite(AbstractSQLStore):
         else:
             return term
 
-    #Where Clause  utility Functions
-    #The predicate and object clause builders are modified in order to optimize
-    #subjects and objects utility functions which can take lists as their last argument (object,predicate - respectively)
+    # Where Clause  utility Functions
+    # The predicate and object clause builders are modified in order to
+    # optimize subjects and objects utility functions which can take
+    # lists as their last argument (object,predicate - respectively)
     def buildSubjClause(self,subject,tableName):
         if isinstance(subject,REGEXTerm):
-            return " REGEXP (%s,"+" %s)"%(tableName and '%s.subject'%tableName or 'subject'),[subject]
+            return " REGEXP (%s,"+" %s)" % (
+                tableName and '%s.subject'%tableName or 'subject'),[subject]
         elif isinstance(subject,list):
             clauseStrings=[]
             paramStrings = []
             for s in subject:
                 if isinstance(s,REGEXTerm):
-                    clauseStrings.append(" REGEXP (%s,"+" %s)"%(tableName and '%s.subject'%tableName or 'subject') + " %s")
+                    clauseStrings.append(" REGEXP (%s,"+" %s)" % (
+                        tableName and '%s.subject'%tableName or 'subject') + " %s")
                     paramStrings.append(self.normalizeTerm(s))
                 elif isinstance(s,(QuotedGraph,Graph)):
                     clauseStrings.append("%s="%(tableName and '%s.subject'%tableName or 'subject')+"%s")
@@ -210,7 +232,8 @@ class SQLite(AbstractSQLStore):
         else:
             return subject is not None and "%s="%(tableName and '%s.subject'%tableName or 'subject')+"%s",[subject] or None
 
-    #Capable off taking a list of predicates as well (in which case sub clauses are joined with 'OR')
+    # Capable of taking a list of predicates as well (in which case
+    # subclauses are joined with 'OR')
     def buildPredClause(self,predicate,tableName):
         if isinstance(predicate,REGEXTerm):
             return " REGEXP (%s,"+" %s)"%(tableName and '%s.predicate'%tableName or 'predicate'),[predicate]
@@ -227,7 +250,8 @@ class SQLite(AbstractSQLStore):
         else:
             return predicate is not None and "%s="%(tableName and '%s.predicate'%tableName or 'predicate')+"%s",[predicate] or None
 
-    #Capable of taking a list of objects as well (in which case sub clauses are joined with 'OR')
+    # Capable of taking a list of objects as well (in which case subclauses
+    # are joined with 'OR')
     def buildObjClause(self,obj,tableName):
         if isinstance(obj,REGEXTerm):
             return " REGEXP (%s,"+" %s)"%(tableName and '%s.object'%tableName or 'object'),[obj]
@@ -314,7 +338,8 @@ class SQLite(AbstractSQLStore):
         parameters = []
 
         if predicate == RDF.type:
-            #select from asserted rdf:type partition and quoted table (if a context is specified)
+            # Select from asserted rdf:type partition and quoted table
+            # (if a context is specified)
             clauseString,params = self.buildClause('typeTable',subject,RDF.type, obj,context,True)
             parameters.extend(params)
             selects = [
@@ -327,7 +352,9 @@ class SQLite(AbstractSQLStore):
             ]
 
         elif isinstance(predicate,REGEXTerm) and predicate.compiledExpr.match(RDF.type) or not predicate:
-            #Select from quoted partition (if context is specified), literal partition if (obj is Literal or None) and asserted non rdf:type partition (if obj is URIRef or None)
+            # Select from quoted partition (if context is specified),
+            # literal partition if (obj is Literal or None) and asserted
+            # non rdf:type partition (if obj is URIRef or None)
             selects = []
             if not self.STRONGLY_TYPED_TERMS or isinstance(obj,Literal) or not obj or (self.STRONGLY_TYPED_TERMS and isinstance(obj,REGEXTerm)):
                 clauseString,params = self.buildClause('literal',subject,predicate,obj,context)
@@ -361,7 +388,9 @@ class SQLite(AbstractSQLStore):
 
 
         elif predicate:
-            #select from asserted non rdf:type partition (optionally), quoted partition (if context is speciied), and literal partition (optionally)
+            # Select from asserted non rdf:type partition (optionally),
+            # quoted partition (if context is speciied), and literal
+            # partition (optionally)
             selects = []
             if not self.STRONGLY_TYPED_TERMS or isinstance(obj,Literal) or not obj or (self.STRONGLY_TYPED_TERMS and isinstance(obj,REGEXTerm)):
                 clauseString,params = self.buildClause('literal',subject,predicate,obj,context)
@@ -396,8 +425,9 @@ class SQLite(AbstractSQLStore):
 
         q=self._normalizeSQLCmd(unionSELECT(selects,selectType=TRIPLE_SELECT_NO_ORDER))
         self.executeSQL(c,q,parameters)
-        #NOTE: SQLite does not support ORDER BY terms that aren't integers, so the entire result set must be iterated
-        #in order to be able to return a generator of contexts
+        # NOTE: SQLite does not support ORDER BY terms that aren't integers,
+        # so the entire result set must be iterated in order to be able to
+        # return a generator of contexts
         tripleCoverage = {}
         result = c.fetchall()
         c.close()
