@@ -21,22 +21,14 @@ from rdflib.graph import RDF
 from rdflib.term import Literal
 from rdfextras.store.REGEXMatching import REGEXTerm
 from rdfextras.store.REGEXMatching import PYTHON_REGEX
-# from rdfextras.store.AbstractSQLStore import AbstractSQLStore, Graph
-# from rdfextras.store.AbstractSQLStore import extractTriple, unionSELECT
-# from rdfextras.store.AbstractSQLStore import ASSERTED_NON_TYPE_PARTITION
-# from rdfextras.store.AbstractSQLStore import ASSERTED_TYPE_PARTITION
-# from rdfextras.store.AbstractSQLStore import ASSERTED_LITERAL_PARTITION
-# from rdfextras.store.AbstractSQLStore import QUOTED_PARTITION
-# from rdfextras.store.AbstractSQLStore import table_name_prefixes
-# from rdfextras.store.AbstractSQLStore import TRIPLE_SELECT_NO_ORDER
-from rdflib_sqlite.AbstractSQLStore import AbstractSQLStore, Graph
-from rdflib_sqlite.AbstractSQLStore import extractTriple, unionSELECT
-from rdflib_sqlite.AbstractSQLStore import ASSERTED_NON_TYPE_PARTITION
-from rdflib_sqlite.AbstractSQLStore import ASSERTED_TYPE_PARTITION
-from rdflib_sqlite.AbstractSQLStore import ASSERTED_LITERAL_PARTITION
-from rdflib_sqlite.AbstractSQLStore import QUOTED_PARTITION
-from rdflib_sqlite.AbstractSQLStore import table_name_prefixes
-from rdflib_sqlite.AbstractSQLStore import TRIPLE_SELECT_NO_ORDER
+from rdfextras.store.AbstractSQLStore import AbstractSQLStore, Graph
+from rdfextras.store.AbstractSQLStore import extractTriple, unionSELECT
+from rdfextras.store.AbstractSQLStore import ASSERTED_NON_TYPE_PARTITION
+from rdfextras.store.AbstractSQLStore import ASSERTED_TYPE_PARTITION
+from rdfextras.store.AbstractSQLStore import ASSERTED_LITERAL_PARTITION
+from rdfextras.store.AbstractSQLStore import QUOTED_PARTITION
+from rdfextras.store.AbstractSQLStore import table_name_prefixes
+from rdfextras.store.AbstractSQLStore import TRIPLE_SELECT_NO_ORDER
 
 import logging
 log = logging.getLogger(__name__)
