@@ -2,10 +2,9 @@ import unittest
 import gc
 import os
 import itertools
+import tempfile
 from time import time
 from random import random
-from tempfile import mkdtemp
-from tempfile import mkstemp
 from rdflib import Graph
 from rdflib import URIRef
 
@@ -31,8 +30,8 @@ class StoreTestCase(unittest.TestCase):
         gc.disable()
 
         self.graph = Graph(store=self.store)
-        self.tmppath = mkdtemp()
-        self.graph.open(self.tmppath)
+        fp, self.path = tempfile.mkstemp(suffix='.sqlite')
+        self.graph.open(self.path, create=True)
         self.input = Graph()
 
     def tearDown(self):
@@ -54,15 +53,14 @@ class StoreTestCase(unittest.TestCase):
                     os.remove(self.path)
 
     def testTime(self):
-        # number = 1
-        print('"%s": [' % self.store)
+        report = '"%s": [' % self.store
         for i in ['500triples', '1ktriples', '2ktriples',
                   '3ktriples', '5ktriples', '10ktriples',
                   '25ktriples']:
             inputloc = os.getcwd() + '/test/sp2b/%s.n3' % i
             res = self._testInput(inputloc)
-            print("%s," % res.strip())
-        print("],")
+            report += "%s," % res.strip()
+        print(report + "],")
 
     def _testInput(self, inputloc):
         number = 1
@@ -79,13 +77,34 @@ class StoreTestCase(unittest.TestCase):
         t1 = time()
         return "%.3g " % (t1 - t0)
 
+    def testQuery(self):
+        query = """\
+            PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX dc:      <http://purl.org/dc/elements/1.1/>
+            PREFIX dcterms: <http://purl.org/dc/terms/>
+            PREFIX bench:   <http://localhost/vocabulary/bench/>
+            PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
+
+            SELECT ?yr
+            WHERE {
+              ?journal rdf:type bench:Journal .
+              ?journal dc:title "Journal 1 (1940)"^^xsd:string .
+              ?journal dcterms:issued ?yr
+            }"""
+        self.input.parse(location=os.getcwd() + '/test/sp2b/25ktriples.n3',
+                        format="n3")
+        t0 = time()
+        res = self.input.query(query)
+        t1 = time()
+        print("Query time %s" % (t1 - t0))
+        assert '1940' in str(list(res)[0])
+
 
 class SQLiteStoreTestCase(StoreTestCase):
     store = "SQLite"
 
     def setUp(self):
         self.store = "SQLite"
-        self.path = "/tmp/sqlitetest"
         StoreTestCase.setUp(self)
 
 if __name__ == '__main__':
