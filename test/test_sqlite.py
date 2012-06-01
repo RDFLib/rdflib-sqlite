@@ -24,32 +24,34 @@ Traceback (most recent call last):
     self.__store.add((s, p, o), self, quoted=False)
   File ".../rdflib-sqlite/rdflib_sqlite/AbstractSQLStore.py", line 522, in add
     subject, predicate, obj, context, self._internedId, quoted)
-  File ".../rdflib-sqlite/rdflib_sqlite/AbstractSQLStore.py", line 299, in buildTripleSQLCommand
+  File "../rdfextras/store/AbstractSQLStore.py", line 299, in buildTripleSQLCommand
     triplePattern = statement2TermCombination(subject, predicate, obj, context)
   File ".../rdfextras/utils/termutils.py", line 204, in statement2TermCombination
     term2Letter(obj), normalizeGraph(context)[-1])]
 KeyError: 'UUUL'
 """
 
+
 class SQLiteGraphTestCase(graph_case.GraphTestCase):
     storetest = True
-    fp, tmppath = mkstemp(prefix='test',dir='/tmp')
+    fp, tmppath = mkstemp(prefix='test', dir='/tmp')
     create = True
     store_name = "SQLite"
     identifier = URIRef("http://rdflib.net")
 
     def setUp(self):
         graph_case.GraphTestCase.setUp(self)
-    
+
     def tearDown(self):
         graph_case.GraphTestCase.tearDown(self)
-   
+
     def testStatementNode(self):
         raise SkipTest("Known issue.")
 
+
 class SQLiteContextTestCase(context_case.ContextTestCase):
     storetest = True
-    fp, tmppath = mkstemp(prefix='test',dir='/tmp')
+    fp, tmppath = mkstemp(prefix='test', dir='/tmp')
     create = True
     store_name = "SQLite"
     identifier = URIRef("http://rdflib.net")
@@ -60,7 +62,7 @@ class SQLiteContextTestCase(context_case.ContextTestCase):
     def tearDown(self):
         self.create = False
         context_case.ContextTestCase.tearDown(self)
-   
+
     def testConjunction(self):
         raise SkipTest("Known issue.")
 
