@@ -13,13 +13,13 @@ def random_uri():
     return URIRef("%s" % random())
 
 
-class StoreTestCase(unittest.TestCase):
+class SQLiteStoreTestCase(unittest.TestCase):
     """
     Test case for testing store performance... probably should be
     something other than a unit test... but for now we'll add it as a
     unit test.
     """
-    store = 'IOMemory'
+    store = "SQLite"
     path = None
     storetest = True
     performancetest = True
@@ -99,13 +99,6 @@ class StoreTestCase(unittest.TestCase):
         print("Query time %s" % (t1 - t0))
         assert '1940' in str(list(res)[0])
 
-
-class SQLiteStoreTestCase(StoreTestCase):
-    store = "SQLite"
-
-    def setUp(self):
-        self.store = "SQLite"
-        StoreTestCase.setUp(self)
 
 if __name__ == '__main__':
     unittest.main()
