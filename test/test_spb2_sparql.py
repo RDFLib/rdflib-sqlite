@@ -1,17 +1,12 @@
+import unittest
 import os
-import sys
 import platform
 from nose.exc import SkipTest
 if platform.system() == 'Java':
     raise SkipTest("Skipping, too taxing for Jython")
 import time
 from glob import glob
-# import rdflib
 from rdflib.graph import Graph
-try:
-    maketrans = str.maketrans
-except AttributeError:
-    from string import maketrans
 import tempfile
 
 DEBUG = True
@@ -19,103 +14,83 @@ EVALUATE = True
 DEBUG_PARSE = True
 STORE = 'SQLite'
 configString = ''
-datasize = '500triples'
-# datasize = '25ktriples'
+datasize = '1ktriples'
 
 
-def create_graph(n3data):
-    g = Graph()
-    fp, fname = tempfile.mkstemp(suffix='.sqlite')
-    g.open(fname, create=True)
-    g.parse(location=n3data, format='n3')
-    return g
+def create_graph(datafile):
+    graph = Graph(store=STORE)
+    fp, path = tempfile.mkstemp(suffix='.sqlite')
+    graph.open(path, create=True)
+    t1 = time.time()
+    graph.parse(location=datafile, format='n3')
+    t2 = time.time()
+    print("%s loaded in %ss" % (datasize, t2 - t1))
+    return graph
 
-global g
-fn = os.path.dirname(os.path.abspath(__file__)) + '/sp2b/%s.n3' % datasize
-g = create_graph(fn)
+datafile = os.path.join(
+            os.path.dirname(__file__), 'sp2b/' + datasize + '.n3')
+the_graph = create_graph(datafile)
 
-skiptests = [
-    # 'q01',
+skiplist = [
+    'q01',
     # 'q02',
     # 'q03a',
     # 'q03b',
     # 'q03c',
     'q04',
     # 'q05a',
-    # 'q05b',
-    # 'q06',
-    # 'q07',
-    # 'q08',
+    'q05b',
+    'q06',
+    'q07',
+    'q08',
     # 'q09',
     # 'q10',
     # 'q11',
     # 'q12a',
-    # 'q12b',
+    'q12b',
     # 'q12c',
 ]
 
 
-class Envelope(object):
-    def __init__(self, n, f):
-        self.name = n
-        self.file = f
+class MetaRDFTest(type):
+    def __new__(mcs, name, bases, dict):
+        testfiles = glob(
+                    os.path.join(os.path.dirname(__file__),
+                    'sp2b/queries/*.sparql'))
+        testfiles.sort()
+        for test_name in testfiles:
+            if test_name.split('/')[-1][:-7] not in skiplist:
+                dict[test_name] = lambda self, test_name=test_name: \
+                                                self.execute(test_name)
+                # Doesn't look right in tracebacks, but looks fine in
+                # nose output.
+                dict[test_name].func_name = test_name
+        return type.__new__(mcs, name, bases, dict)
 
-    def __repr__(self):
-        return self.name
 
+class SQLiteTests(unittest.TestCase):
+    __metaclass__ = MetaRDFTest
 
-def generictest(e):
-    """Documentation"""
-    if e.skip:
-        raise SkipTest("long SPARQL test %s skipped" % e.name)
-    q = open(e.file).read()
-    t1 = time.time()
-    result = g.query(q, processor='sparql')
-    # assert result == "not likely", result
-    t2 = time.time()
-    if getattr(result, 'result', False):
-        if not result.result:
-            def stab(result):
-                if result.askAnswer[0]:
-                    return [True]
+    def execute(self, testname):
+        query = open(unicode(testname), 'r').read()
+        t1 = time.time()
+        result = the_graph.query(query, processor='sparql')
+        # assert result == "not likely", result
+        t2 = time.time()
+        if getattr(result, 'result', False):
+            if not result.result:
+                def stab(result):
+                    if result.askAnswer[0]:
+                        return [True]
+                    else:
+                        []
+                if result.askAnswer:
+                    res = stab(result)
                 else:
-                    []
-            if result.askAnswer:
-                res = stab(result)
+                    res = []
             else:
-                res = []
+                res = result.result
         else:
-            res = result.result
-    else:
-        res = []
-    print("Q%s\t%s\t%fs" % (e.file[9:-7], len(res), t2 - t1))
-
-
-def test_cases():
-    from copy import deepcopy
-    here_dir = os.path.dirname(os.path.abspath(__file__))
-    print(here_dir)
-    if not 'sp2b' in here_dir:
-        os.chdir(here_dir + '/sp2b')
-    for idx, testFile in enumerate(glob('queries/*.sparql')):  # [40:50]):
-        if idx in [5, 6]:
-            continue
-        gname = testFile.split('queries/'
-                )[1][:-7].translate(maketrans('-/', '__'))
-        e = Envelope(gname, testFile)
-        if gname in skiptests:
-            e.skip = True
-        else:
-            e.skip = False
-        # e.skip = True
-        if sys.version_info[:2] == (2, 4):
-            import pickle
-            gjt = pickle.dumps(generictest)
-            gt = pickle.loads(gjt)
-        else:
-            gt = deepcopy(generictest)
-        gt.__doc__ = testFile
-        yield gt, e
-
-if __name__ == "__main__":
-    test_cases()
+            res = []
+        print("%s : %s results in %fs" % (
+            testname.split('/')[-1], len(res), t2 - t1))
