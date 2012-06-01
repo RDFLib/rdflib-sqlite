@@ -5,6 +5,7 @@ from rdflib import Graph
 from rdflib import Literal
 from rdflib import URIRef
 from rdflib.namespace import XSD, RDFS
+from rdflib.py3compat import b
 
 
 class CoreSQLiteStoreTestCase(unittest.TestCase):
@@ -38,11 +39,11 @@ class CoreSQLiteStoreTestCase(unittest.TestCase):
     def test_escape_quoting(self):
         test_string = "This's a Literal!!"
         self.graph.add(
-            (URIRef("http://example.org/foo"), 
+            (URIRef("http://example.org/foo"),
              RDFS.label,
              Literal(test_string, datatype=XSD.string)))
         self.graph.commit()
-        assert "This's a Literal!!" in self.graph.serialize(format="xml")
+        assert b("This's a Literal!!") in self.graph.serialize(format="xml")
 
 if __name__ == '__main__':
     unittest.main()
