@@ -173,16 +173,11 @@ class SQLite(AbstractSQLStore):
         c.close()
         db.close()
 
-    def EscapeQuotes(self,qstr):
+    def EscapeQuotes(self, qstr):
         """
-        Ported from Ft.Lib.DbUtil
+        Standard SQL escaping required
         """
-        if qstr is None:
-            return ''
-        tmp = qstr.replace("\\","\\\\")
-        tmp = tmp.replace('"', '""')
-        tmp = tmp.replace("'", "\\'")
-        return tmp
+        return qstr.replace("'", "''") if qstr is not None else ''
 
     # This is overridden to leave unicode terms as is
     # Instead of converting them to ascii (the default behavior)
