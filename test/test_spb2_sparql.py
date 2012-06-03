@@ -14,12 +14,13 @@ EVALUATE = True
 DEBUG_PARSE = True
 STORE = 'SQLite'
 configString = ''
-datasize = '1ktriples'
+datasize = '5ktriples'
 
 
 def create_graph(datafile):
     graph = Graph(store=STORE)
-    fp, path = tempfile.mkstemp(suffix='.sqlite')
+    # fp, path = tempfile.mkstemp(suffix='.sqlite')
+    path = ":memory:"
     graph.open(path, create=True)
     t1 = time.time()
     graph.parse(location=datafile, format='n3')
@@ -51,6 +52,25 @@ skiplist = [
     # 'q12c',
 ]
 
+skiplist = [
+    'q01',
+    'q02',
+    'q03a',
+    'q03b',
+    'q03c',
+    'q04',
+    # 'q05a',
+    'q05b',
+    'q06',
+    'q07',
+    'q08',
+    'q09',
+    'q10',
+    'q11',
+    'q12a',
+    'q12b',
+    'q12c',
+]
 
 class MetaRDFTest(type):
     def __new__(mcs, name, bases, dict):

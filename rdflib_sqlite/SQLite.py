@@ -134,14 +134,20 @@ class SQLite(AbstractSQLStore):
                     c.execute("CREATE INDEX %s on %s (%s)" % (
                         indexName % self._internedId, tblName % (
                                     self._internedId), ','.join(columns)))
-            c.close()
-            db.commit()
-            db.close()
+            if home == ":memory:":
+                db.commit()
+            else:
+                c.close()
+                db.commit()
+                db.close()
 
-        self._db = sqlite3.connect(home)
+        if home == ":memory:":
+            self._db = db
+        else:
+            self._db = sqlite3.connect(home)
         self._db.create_function("regexp", 2, regexp)
 
-        if os.path.exists(home):
+        if os.path.exists(home) or home == ":memory:":
             c = self._db.cursor()
             c.execute("SELECT * FROM sqlite_master WHERE type='table'")
             tbls = [rt[1] for rt in c.fetchall()]
@@ -162,22 +168,25 @@ class SQLite(AbstractSQLStore):
         """
         FIXME: Add documentation
         """
-        db = sqlite3.connect(home)
-        c = db.cursor()
-        for tblsuffix in table_name_prefixes:
-            try:
-                c.execute('DROP table %s' % tblsuffix % (self._internedId))
-            except Exception, errmsg:
-                print("unable to drop table: %s, %s" % (
-                          tblsuffix % (self._internedId), errmsg))
-                # pass
-        # Note, this only removes the associated tables for the closed
-        # world universe given by the identifier
-        # print("Destroyed Close World Universe %s (in SQLite database %s)" % (
-        #        self.identifier,home))
-        db.commit()
-        c.close()
-        db.close()
+        if home == ":memory:":
+            self._db = None
+        else:
+            db = sqlite3.connect(home)
+            c = db.cursor()
+            for tblsuffix in table_name_prefixes:
+                try:
+                    c.execute('DROP table %s' % tblsuffix % (self._internedId))
+                except Exception, errmsg:
+                    print("unable to drop table: %s, %s" % (
+                              tblsuffix % (self._internedId), errmsg))
+                    # pass
+            # Note, this only removes the associated tables for the closed
+            # world universe given by the identifier
+            # print("Destroyed Close World Universe %s (in SQLite database %s)" % (
+            #        self.identifier,home))
+            db.commit()
+            c.close()
+            db.close()
 
     def EscapeQuotes(self, qstr):
         """
