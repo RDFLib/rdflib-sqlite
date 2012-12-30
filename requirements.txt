@@ -1,0 +1,2 @@
+rdflib>=3.2.3
+rdfextras
