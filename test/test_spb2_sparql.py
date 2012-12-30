@@ -59,7 +59,7 @@ skiplist = [
     'q03b',
     'q03c',
     'q04',
-    # 'q05a',
+    'q05a',
     'q05b',
     'q06',
     'q07',
@@ -71,6 +71,7 @@ skiplist = [
     'q12b',
     'q12c',
 ]
+
 
 class MetaRDFTest(type):
     def __new__(mcs, name, bases, dict):

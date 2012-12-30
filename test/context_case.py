@@ -36,7 +36,7 @@ class ContextTestCase(unittest.TestCase):
         # self.graph.open(self.tmppath)
     
     def tearDown(self):
-        self.graph.destroy(self.tmppath)
+        # self.graph.destroy(self.tmppath)
         try:
             self.graph.close()
         except:
@@ -138,7 +138,7 @@ class ContextTestCase(unittest.TestCase):
 
         # addStuffInMultipleContexts is adding the same triple to
         # three different contexts. So it's only + 1
-        self.assertEquals(len(self.graph), oldLen + 1) 
+        self.assertEquals(len(self.graph), oldLen + 1)
 
         graph = Graph(self.graph.store, self.c1)
         self.assertEquals(len(graph), oldLen + 1)
@@ -175,12 +175,12 @@ class ContextTestCase(unittest.TestCase):
             if not isinstance(c, basestring):
                 return c.identifier
             return c
-        self.assert_(self.c1 in map(cid, self.graph.contexts()))
-        self.assert_(self.c2 in map(cid, self.graph.contexts()))
+        self.assert_(str(self.c1) in map(cid, self.graph.contexts()))
+        self.assert_(str(self.c2) in map(cid, self.graph.contexts()))
 
         contextList = map(cid, list(self.graph.contexts(triple)))
-        self.assert_(self.c1 in contextList)
-        self.assert_(self.c2 in contextList)
+        self.assert_(str(self.c1) in contextList)
+        self.assert_(str(self.c2) in contextList)
 
     def testRemoveContext(self):
         c1 = self.c1

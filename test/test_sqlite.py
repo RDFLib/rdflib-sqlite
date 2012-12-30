@@ -45,9 +45,6 @@ class SQLiteGraphTestCase(graph_case.GraphTestCase):
     def tearDown(self):
         graph_case.GraphTestCase.tearDown(self)
 
-    def testStatementNode(self):
-        raise SkipTest("Known issue.")
-
 
 class SQLiteContextTestCase(context_case.ContextTestCase):
     storetest = True
@@ -64,15 +61,14 @@ class SQLiteContextTestCase(context_case.ContextTestCase):
         context_case.ContextTestCase.tearDown(self)
 
     def testConjunction(self):
-        raise SkipTest("Known issue.")
+        raise SkipTest("Skipping issue with AbstractSQLStore __len__")
 
-    def testContexts(self):
-        raise SkipTest("Known issue.")
+    # def testContexts(self):
+    #     raise SkipTest("Known issue.")
 
     def testLenInMultipleContexts(self):
-        raise SkipTest("Known issue.")
+        raise SkipTest("Skipping issue with AbstractSQLStore __len__")
 
 
 SQLiteGraphTestCase.storetest = True
 SQLiteContextTestCase.storetest = True
-
