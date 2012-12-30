@@ -1,13 +1,10 @@
 try:
     from sqlite3 import dbapi2 as sqlite3  # python 2.5
-except:
-    try:
-        from pysqlite2 import dbapi2 as sqlite3
-    except ImportError:
-        import warnings
-        warnings.warn(
-            "neither pysqlite2 (Python 2.4) nor sqlite3 is installed")
-        __test__ = False
+except ImportError:
+    import warnings
+    warnings.warn(
+        "sqlite3 not found, is it installed?")
+    __test__ = False
 
 import re
 import os
@@ -67,10 +64,10 @@ class SQLite(AbstractSQLStore):
     def open(self, home, create=True):
         """
         Opens the store specified by the configuration string. If
-        create is True a store will be created if it does not already
-        exist. If create is False and a store does not already exist
+        create is ``True`` a store will be created if it does not already
+        exist. If create is ``False`` and a store does not already exist
         an exception is raised. An exception is also raised if a store
-        exists, but there is insufficient permissions to open the
+        exists, but there are insufficient permissions to open the
         store."""
         if create:
             db = sqlite3.connect(home)
@@ -182,7 +179,8 @@ class SQLite(AbstractSQLStore):
                     # pass
             # Note, this only removes the associated tables for the closed
             # world universe given by the identifier
-            # print("Destroyed Close World Universe %s (in SQLite database %s)" % (
+            # print("Destroyed Close World Universe" + \
+            #       " %s (in SQLite database %s)" % (
             #        self.identifier,home))
             db.commit()
             c.close()
@@ -382,11 +380,14 @@ class SQLite(AbstractSQLStore):
         example, RegExLiteral, Date? DateRange?
 
         quoted table:                <id>_quoted_statements
+
         asserted rdf:type table:     <id>_type_statements
+
         asserted non rdf:type table: <id>_asserted_statements
 
         triple columns: subject, predicate, object, context, termComb,
                         objLanguage, objDatatype
+
         class membership columns: member, klass, context, termComb
 
         FIXME:  These union all selects *may* be further optimized by joins
