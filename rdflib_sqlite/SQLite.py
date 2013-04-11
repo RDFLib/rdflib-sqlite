@@ -61,7 +61,7 @@ class SQLite(AbstractSQLStore):
     autocommit_default = False
     _Store__node_pickler = None
 
-    def open(self, home, create=True):
+    def open(self, home, create=False):
         """
         Opens the store specified by the configuration string. If
         create is ``True`` a store will be created if it does not already
