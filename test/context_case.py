@@ -175,12 +175,12 @@ class ContextTestCase(unittest.TestCase):
             if not isinstance(c, basestring):
                 return c.identifier
             return c
-        self.assert_(str(self.c1) in map(cid, self.graph.contexts()))
-        self.assert_(str(self.c2) in map(cid, self.graph.contexts()))
+        self.assert_(self.c1 in map(cid, self.graph.contexts()))
+        self.assert_(self.c2 in map(cid, self.graph.contexts()))
 
         contextList = map(cid, list(self.graph.contexts(triple)))
-        self.assert_(str(self.c1) in contextList)
-        self.assert_(str(self.c2) in contextList)
+        self.assert_(self.c1 in contextList)
+        self.assert_(self.c2 in contextList)
 
     def testRemoveContext(self):
         c1 = self.c1
